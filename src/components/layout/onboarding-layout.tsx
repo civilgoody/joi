@@ -29,26 +29,24 @@ export function OnboardingLayout({
       )}
     >
       {/* Header with navigation */}
-      <header className="flex items-center justify-between p-6">
-        <div className="flex items-center">
-          {showBack && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="text-muted-foreground hover:text-foreground text-lg font-bold"
-            >
-              <FaChevronCircleLeft size={20} className="min-w-4 h-4" />
-              <span className="ml-2">Back</span>
-            </Button>
-          )}
-        </div>
+      <header className="flex items-center justify-between pt-6">
+        {showBack && (
+          <Button
+            variant="ghost"
+            // size="icon"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground text-lg font-bold px-4"
+          >
+            <FaChevronCircleLeft size={20} className="min-w-4 h-4" />
+            <span className="ml-2">Back</span>
+          </Button>
+        )}
 
         {showSkip && (
           <Button
             variant="ghost"
             onClick={onSkip}
-            className="text-muted-foreground hover:text-foreground text-lg font-bold"
+            className="text-muted-foreground hover:text-foreground text-lg font-bold px-4 ml-auto"
           >
             Skip
           </Button>
