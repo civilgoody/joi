@@ -1,71 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Plus,
-  Sun,
-  Droplets,
-  Coffee,
-  Moon,
-  Settings,
-  ArrowLeft,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { DEFAULT_TIMELINE_ITEMS } from "@/lib/constants";
+// import { useState } from "react";
+// import { Sun, Droplets, Coffee, Moon } from "lucide-react";
+// import { DEFAULT_TIMELINE_ITEMS } from "@/lib/constants";
 import { TimelineItem } from "@/lib/types";
 import { RiSettingsFill } from "react-icons/ri";
 import { FaPlus } from "react-icons/fa6";
 import { FaArrowLeft } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 
-const iconMap = {
-  sun: Sun,
-  droplets: Droplets,
-  coffee: Coffee,
-  moon: Moon,
-};
+// const iconMap = {
+//   sun: Sun,
+//   droplets: Droplets,
+//   coffee: Coffee,
+//   moon: Moon,
+// };
 
 interface DailyTimelineProps {
   date?: Date;
   items?: TimelineItem[];
 }
 
-export function DailyTimeline({
-  date = new Date("2025-07-19"),
-  items = DEFAULT_TIMELINE_ITEMS,
-}: DailyTimelineProps) {
-  const [currentDate] = useState(date);
-  const [timelineItems] = useState(items);
+export function DailyTimeline({}: // date = new Date("2025-07-19"),
+// items = DEFAULT_TIMELINE_ITEMS,
+DailyTimelineProps) {
   const router = useRouter();
-  const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: "short",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
-  };
+  // const [currentDate] = useState(date);
+  // const [timelineItems] = useState(items);
+  // const formatDate = (date: Date) => {
+  //   const options: Intl.DateTimeFormatOptions = {
+  //     weekday: "short",
+  //     month: "long",
+  //     day: "numeric",
+  //     year: "numeric",
+  //   };
+  //   return date.toLocaleDateString("en-US", options);
+  // };
 
-  const getDayName = (date: Date) => {
-    return date.toLocaleDateString("en-US", { weekday: "short" });
-  };
+  // const getDayName = (date: Date) => {
+  //   return date.toLocaleDateString("en-US", { weekday: "short" });
+  // };
 
-  const getWeekDays = (currentDate: Date) => {
-    const days = [];
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - 3); // Show 3 days before
+  // const getWeekDays = (currentDate: Date) => {
+  //   const days = [];
+  //   const startOfWeek = new Date(currentDate);
+  //   startOfWeek.setDate(currentDate.getDate() - 3); // Show 3 days before
 
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
-      days.push(day);
-    }
-    return days;
-  };
+  //   for (let i = 0; i < 7; i++) {
+  //     const day = new Date(startOfWeek);
+  //     day.setDate(startOfWeek.getDate() + i);
+  //     days.push(day);
+  //   }
+  //   return days;
+  // };
 
-  const weekDays = getWeekDays(currentDate);
+  // const weekDays = getWeekDays(currentDate);
 
   return (
     <div className="space-y-6 flex-1 flex flex-col justify-between">
