@@ -34,7 +34,7 @@
     /* UI Elements */
     --border: 220 13% 91%; /* Light gray borders */
     --input: 210 10% 98%; /* Light input backgrounds */
-    --ring: 14 100% 59%; /* Focus ring using Joi orange */
+    --ring: 0 0% 0%; /* Focus ring light black */
 
     /* Chart Colors */
     --chart-1: 14 100% 59%; /* Joi orange */

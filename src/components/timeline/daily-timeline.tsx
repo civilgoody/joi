@@ -1,11 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Sun, Droplets, Coffee, Moon } from "lucide-react";
+import {
+  Plus,
+  Sun,
+  Droplets,
+  Coffee,
+  Moon,
+  Settings,
+  ArrowLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DEFAULT_TIMELINE_ITEMS } from "@/lib/constants";
 import { TimelineItem } from "@/lib/types";
+import { RiSettingsFill } from "react-icons/ri";
+import { FaPlus } from "react-icons/fa6";
+import { FaArrowLeft } from "react-icons/fa6";
+import { useRouter } from "next/navigation";
 
 const iconMap = {
   sun: Sun,
@@ -25,7 +37,7 @@ export function DailyTimeline({
 }: DailyTimelineProps) {
   const [currentDate] = useState(date);
   const [timelineItems] = useState(items);
-
+  const router = useRouter();
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: "short",
@@ -56,9 +68,9 @@ export function DailyTimeline({
   const weekDays = getWeekDays(currentDate);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex-1 flex flex-col justify-between">
       {/* Date Header */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <h1 className="text-4xl font-bold">{getDayName(currentDate)}</h1>
         <div className="text-right">
           <div className="text-sm text-muted-foreground">
@@ -68,7 +80,7 @@ export function DailyTimeline({
       </div>
 
       {/* Week Navigation */}
-      <div className="flex items-center justify-center space-x-4">
+      {/* <div className="flex items-center justify-center space-x-4">
         {weekDays.map((day, index) => {
           const isSelected = day.toDateString() === currentDate.toDateString();
           const dayNum = day.getDate();
@@ -91,10 +103,10 @@ export function DailyTimeline({
             </button>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Timeline Items */}
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <div className="space-y-4">
           {timelineItems.map((item) => {
             const IconComponent = iconMap[item.icon as keyof typeof iconMap];
@@ -104,9 +116,9 @@ export function DailyTimeline({
               <div
                 key={item.id}
                 className="flex items-center space-x-4 py-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                {/* Icon */}
-                <div
+              > */}
+      {/* Icon */}
+      {/* <div
                   className={`p-2 rounded-full ${
                     item.color === "wake-up"
                       ? "bg-wake-up/10"
@@ -126,15 +138,15 @@ export function DailyTimeline({
                       }`}
                     />
                   )}
-                </div>
+                </div> */}
 
-                {/* Content */}
-                <div className="flex-1">
+      {/* Content */}
+      {/* <div className="flex-1">
                   <div className="text-lg font-medium">{item.title}</div>
-                </div>
+                </div> */}
 
-                {/* Time */}
-                {hasTime && (
+      {/* Time */}
+      {/* {hasTime && (
                   <div className="text-lg font-medium text-muted-foreground">
                     {item.time}
                   </div>
@@ -143,25 +155,24 @@ export function DailyTimeline({
             );
           })}
         </div>
-      </Card>
-
-      {/* Add Button */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2">
-        <Button size="icon" className="rounded-full w-14 h-14 shadow-lg">
-          <Plus className="h-6 w-6" />
-        </Button>
-      </div>
+      </Card> */}
 
       {/* Bottom Navigation Indicators */}
-      <div className="flex items-center justify-center space-x-8 pt-8 pb-4">
-        <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
-          <div className="w-4 h-4 rounded-full bg-foreground"></div>
+      <div className="flex items-center justify-between pt-8 pb-4">
+        <button className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
+          <RiSettingsFill className="size-7 text-muted-foreground rotate-90" />
         </button>
-        <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
-          <Plus className="h-4 w-4 text-muted-foreground" />
+        <button className="w-20 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
+          <FaPlus className="size-7 text-muted-foreground" />
         </button>
-        <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
-          <div className="w-4 h-4 text-muted-foreground">←</div>
+        <button className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
+          <FaArrowLeft
+            className="size-7 text-muted-foreground"
+            onClick={() => {
+              router.push("/");
+            }}
+            title="Back to home"
+          />
         </button>
       </div>
     </div>

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEFAULT_USER_PREFERENCES } from "@/lib/constants";
 import { LuSunrise } from "react-icons/lu";
+import { OnboardingStepLayout } from "./onboarding-step-layout";
 
 interface TimeSetupProps {
   onContinue: (wakeUpTime: string, windDownTime: string) => void;
@@ -26,13 +26,10 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-center space-y-8">
-      {/* Step indicator */}
-
-      {/* Title */}
-      <div className="space-y-2">
-        <div className="text-lg font-bold">Step 1</div>
-        <h1 className="text-4xl font-bold text-foreground leading-tight">
+    <OnboardingStepLayout
+      stepNumber="1"
+      titleComponent={
+        <h1>
           Set your{" "}
           <span className="inline-flex items-center gap-1">
             <LuSunrise className="h-8 w-8" />
@@ -47,10 +44,12 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
           <br />
           hours
         </h1>
-      </div>
-
+      }
+      buttonText="Continue"
+      onButtonClick={handleContinue}
+    >
       {/* Time Inputs */}
-      <div className="space-y-6">
+      <div className="space-y-6 mb-16">
         {/* Wake up time */}
         <div className="flex items-center justify-between bg-zinc-100 shadow-sm p-4 rounded-lg">
           <div className="flex items-center gap-3">
@@ -64,7 +63,7 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
             type="time"
             value={wakeUpTime}
             onChange={(e) => setWakeUpTime(e.target.value)}
-            className="w-32 text-lg font-medium text-right bg-zinc-200"
+            className="w-28 text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
 
@@ -81,19 +80,10 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
             type="time"
             value={windDownTime}
             onChange={(e) => setWindDownTime(e.target.value)}
-            className="w-32 text-lg font-medium text-right bg-zinc-200"
+            className="w-28 text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
       </div>
-
-      {/* Continue Button */}
-      <Button
-        onClick={handleContinue}
-        className="w-full h-16 rounded-2xl"
-        size="lg"
-      >
-        Continue
-      </Button>
-    </div>
+    </OnboardingStepLayout>
   );
 }
