@@ -57,7 +57,7 @@ DailyTimelineProps) {
   // const weekDays = getWeekDays(currentDate);
 
   return (
-    <div className="space-y-6 flex-1 flex flex-col justify-between">
+    <div className="space-y-6 relative flex-1 flex flex-col justify-between">
       {/* Date Header */}
       {/* <div className="flex items-center justify-between">
         <h1 className="text-4xl font-bold">{getDayName(currentDate)}</h1>
@@ -147,7 +147,7 @@ DailyTimelineProps) {
       </Card> */}
 
       {/* Bottom Navigation Indicators */}
-      <div className="flex items-center justify-between pt-8 pb-4">
+      <div className="flex items-center justify-between pt-8 absolute bottom-0 left-0 right-0">
         <button className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
           <RiSettingsFill className="size-7 text-muted-foreground rotate-90" />
         </button>

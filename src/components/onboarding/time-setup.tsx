@@ -62,7 +62,7 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
             type="time"
             value={wakeUpTime}
             onChange={(e) => setWakeUpTime(e.target.value)}
-            className="w-28 text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            className="w-fit text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function TimeSetup({ onContinue }: TimeSetupProps) {
             type="time"
             value={windDownTime}
             onChange={(e) => setWindDownTime(e.target.value)}
-            className="w-28 text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            className="w-fit text-lg font-medium text-right bg-zinc-200 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
       </div>

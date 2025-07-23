@@ -10,7 +10,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, className }: AppLayoutProps) {
   return (
     <div className={cn("min-h-screen bg-background", className)}>
-      <main className="container min-h-svh flex flex-col mx-auto max-w-md px-6 py-8">
+      <main className="container min-h-screen flex flex-col mx-auto max-w-md px-6 py-8">
         {children}
       </main>
     </div>
