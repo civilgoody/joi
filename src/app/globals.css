@@ -5,76 +5,86 @@
 @layer base {
   :root {
     /* Background & Foreground */
-    --background: 0 0% 100%; /* Pure white */
-    --foreground: 0 0% 3.9%; /* Almost black text */
+    --background: 210 10% 98%; /* Light gray/off-white #F8F9FA */
+    --foreground: 0 0% 10%; /* Near black #1A1A1A */
 
     /* Card Components */
-    --card: 0 0% 100%; /* White card background */
-    --card-foreground: 0 0% 3.9%; /* Dark text on cards */
+    --card: 0 0% 100%; /* Pure white #FFFFFF */
+    --card-foreground: 0 0% 10%; /* Near black */
 
     /* Interactive Elements */
-    --primary: 0 0% 9%; /* Dark primary (almost black) */
-    --primary-foreground: 0 0% 98%; /* Light text on primary */
-    --secondary: 0 0% 96.1%; /* Light gray secondary */
-    --secondary-foreground: 0 0% 9%; /* Dark text on secondary */
+    --primary: 0 0% 10%; /* Dark charcoal #2D3748 */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 210 10% 98%; /* Light background */
+    --secondary-foreground: 0 0% 10%; /* Dark text */
+
+    /* Joi Brand Colors */
+    --joi-orange: 14 100% 59%; /* #FF6B35 - Joi brand accent */
+    --wake-up: 36 100% 59%; /* #FFA726 - Warm yellow/orange */
+    --wind-down: 235 58% 55%; /* #5C6BC0 - Calming blue */
 
     /* States & Feedback */
-    --muted: 0 0% 96.1%; /* Muted background (light gray) */
-    --muted-foreground: 0 0% 45.1%; /* Muted text (medium gray) */
-    --accent: 0 0% 96.1%; /* Accent background */
-    --accent-foreground: 0 0% 9%; /* Accent text */
-    --destructive: 0 84.2% 60.2%; /* Red for destructive actions */
-    --destructive-foreground: 0 0% 98%; /* White text on destructive */
+    --muted: 210 10% 96%; /* Light gray background */
+    --muted-foreground: 0 0% 75%; /* Medium light gray #6B7280 */
+    --accent: 14 100% 59%; /* Joi orange accent */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --destructive: 0 84% 60%; /* Red for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
     /* UI Elements */
-    --border: 0 0% 89.8%; /* Light gray borders */
-    --input: 0 0% 89.8%; /* Input backgrounds */
-    --ring: 0 0% 3.9%; /* Focus ring color */
+    --border: 220 13% 91%; /* Light gray borders */
+    --input: 210 10% 98%; /* Light input backgrounds */
+    --ring: 14 100% 59%; /* Focus ring using Joi orange */
 
     /* Chart Colors */
-    --chart-1: 12 76% 61%; /* Orange */
-    --chart-2: 173 58% 39%; /* Teal */
-    --chart-3: 197 37% 24%; /* Dark blue */
-    --chart-4: 43 74% 66%; /* Yellow */
-    --chart-5: 27 87% 67%; /* Coral */
+    --chart-1: 14 100% 59%; /* Joi orange */
+    --chart-2: 235 58% 55%; /* Wind-down blue */
+    --chart-3: 36 100% 59%; /* Wake-up orange */
+    --chart-4: 142 76% 36%; /* Green */
+    --chart-5: 262 83% 58%; /* Purple */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Slightly more rounded for mobile feel */
   }
 
   .dark {
     /* Dark Mode - Background & Foreground */
-    --background: 0 0% 3.9%; /* Dark background */
-    --foreground: 0 0% 98%; /* Light text */
+    --background: 222 84% 5%; /* Dark slate background */
+    --foreground: 210 40% 98%; /* Light text */
 
     /* Dark Mode - Cards */
-    --card: 0 0% 3.9%; /* Dark card background */
-    --card-foreground: 0 0% 98%; /* Light text on cards */
+    --card: 222 84% 5%; /* Dark card background */
+    --card-foreground: 210 40% 98%; /* Light text on cards */
 
     /* Dark Mode - Interactive Elements */
-    --primary: 0 0% 98%; /* Light primary */
-    --primary-foreground: 0 0% 9%; /* Dark text on primary */
-    --secondary: 0 0% 14.9%; /* Dark gray secondary */
-    --secondary-foreground: 0 0% 98%; /* Light text on secondary */
+    --primary: 14 100% 59%; /* Joi orange as primary in dark */
+    --primary-foreground: 222 84% 5%; /* Dark text on orange */
+    --secondary: 217 33% 17%; /* Dark gray secondary */
+    --secondary-foreground: 210 40% 98%; /* Light text on secondary */
+
+    /* Dark Mode - Joi Brand Colors (adjusted for dark mode) */
+    --joi-orange: 14 100% 59%; /* Keep brand orange consistent */
+    --wake-up: 36 100% 65%; /* Slightly lighter wake-up color */
+    --wind-down: 235 85% 65%; /* Slightly brighter wind-down blue */
 
     /* Dark Mode - States & Feedback */
-    --muted: 0 0% 14.9%; /* Dark muted background */
-    --muted-foreground: 0 0% 63.9%; /* Lighter muted text */
-    --accent: 0 0% 14.9%; /* Dark accent */
-    --accent-foreground: 0 0% 98%; /* Light accent text */
-    --destructive: 0 62.8% 30.6%; /* Darker red for dark mode */
-    --destructive-foreground: 0 0% 98%; /* Light text on destructive */
+    --muted: 217 33% 17%; /* Dark muted background */
+    --muted-foreground: 215 20% 65%; /* Lighter muted text */
+    --accent: 14 100% 59%; /* Joi orange accent */
+    --accent-foreground: 222 84% 5%; /* Dark text on accent */
+    --destructive: 0 84% 60%; /* Red for dark mode */
+    --destructive-foreground: 210 40% 98%; /* Light text on destructive */
 
     /* Dark Mode - UI Elements */
-    --border: 0 0% 14.9%; /* Dark borders */
-    --input: 0 0% 14.9%; /* Dark input backgrounds */
-    --ring: 0 0% 83.1%; /* Light focus ring */
+    --border: 217 33% 17%; /* Dark borders */
+    --input: 217 33% 17%; /* Dark input backgrounds */
+    --ring: 14 100% 59%; /* Orange focus ring */
 
     /* Dark Mode - Chart Colors */
-    --chart-1: 220 70% 50%; /* Blue */
-    --chart-2: 160 60% 45%; /* Green */
-    --chart-3: 30 80% 55%; /* Orange */
-    --chart-4: 280 65% 60%; /* Purple */
-    --chart-5: 340 75% 55%; /* Pink */
+    --chart-1: 14 100% 59%; /* Joi orange */
+    --chart-2: 235 85% 65%; /* Brighter blue */
+    --chart-3: 36 100% 65%; /* Lighter orange */
+    --chart-4: 142 76% 36%; /* Green */
+    --chart-5: 262 83% 58%; /* Purple */
   }
 }
 
@@ -83,6 +93,31 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Custom utility classes for Joi-specific colors */
+@layer utilities {
+  .text-joi-orange {
+    color: hsl(var(--joi-orange));
+  }
+  .bg-joi-orange {
+    background-color: hsl(var(--joi-orange));
+  }
+  .text-wake-up {
+    color: hsl(var(--wake-up));
+  }
+  .bg-wake-up {
+    background-color: hsl(var(--wake-up));
+  }
+  .text-wind-down {
+    color: hsl(var(--wind-down));
+  }
+  .bg-wind-down {
+    background-color: hsl(var(--wind-down));
+  }
+  .border-joi-orange {
+    border-color: hsl(var(--joi-orange));
   }
 }

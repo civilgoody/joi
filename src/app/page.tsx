@@ -1,3 +1,5 @@
-export default function Home() {
-  return <div className="bg-background">Hello World</div>;
+import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
+
+export default function HomePage() {
+  return <OnboardingFlow />;
 }

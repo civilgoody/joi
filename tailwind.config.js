@@ -58,6 +58,10 @@ module.exports = {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        // Joi-specific colors
+        "joi-orange": "hsl(var(--joi-orange))",
+        "wake-up": "hsl(var(--wake-up))",
+        "wind-down": "hsl(var(--wind-down))",
       },
     },
   },
