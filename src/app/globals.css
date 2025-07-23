@@ -24,7 +24,7 @@
     --wind-down: 235 58% 55%; /* #5C6BC0 - Calming blue */
 
     /* States & Feedback */
-    --muted: 210 10% 96%; /* Light gray background */
+    --muted: 240 15% 96%; /* Light gray background */
     --muted-foreground: 0 0% 75%; /* Medium light gray #6B7280 */
     --accent: 14 100% 59%; /* Joi orange accent */
     --accent-foreground: 0 0% 100%; /* White text on accent */
