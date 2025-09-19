@@ -12,6 +12,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "Nextjs Template",
+  description: "Nextjs Template",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
