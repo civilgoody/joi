@@ -22,12 +22,12 @@ export const Logo = React.forwardRef<HTMLImageElement, LogoProps>(
       retina = true,
       variant = "default",
       className,
-      alt = "Exportpadi",
+      alt = "Logo",
       ...props
     },
     ref
   ) => {
-    const logoSrc = retina ? "/images/logo@2x.png" : "/images/logo.png";
+    const logoSrc = retina ? "/images/logo@2x.png" : "/images/logo.jpeg";
 
     return (
       <Link href="/">
