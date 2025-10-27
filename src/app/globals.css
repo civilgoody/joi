@@ -109,4 +109,49 @@
   body {
     @apply bg-background text-foreground;
   }
+  div {
+    @apply custom-scrollbar;
+  }
+}
+
+/* Ensure smooth transitions between themes */
+* {
+  transition-property: color, background-color, border-color, font-family;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Custom scrollbar with high specificity */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 2px !important;
+  height: 2px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary)) !important;
+  border-radius: 1px !important;
+  border: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8) !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button,
+.custom-scrollbar::-webkit-scrollbar-corner {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Firefox support */
+@-moz-document url-prefix() {
+  .custom-scrollbar {
+    scrollbar-width: thin !important;
+    scrollbar-color: hsl(var(--primary)) transparent !important;
+  }
 }
