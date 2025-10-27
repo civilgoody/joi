@@ -1,53 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
-import { PaginationResponse } from "@/lib/types";
+import { useMemo } from "react";
 import { req } from "@/lib/api";
+import { PaginationResponse } from "@/lib/types";
 
-// Standalone pagination hook (keeps existing functionality)
-interface UsePaginationServerProps {
-  pageParam?: string;
-  pageSize?: number;
-  onPageChange?: (page: number) => void;
-}
-
-interface UsePaginationServerReturn {
-  currentPage: number;
-  pageSize: number;
-  handlePageChange: (page: number) => void;
-}
-
-export function usePaginationServer({
-  pageParam = "page",
-  pageSize = 12,
-  onPageChange,
-}: UsePaginationServerProps = {}): UsePaginationServerReturn {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const currentPage = Number(searchParams.get(pageParam)) || 1;
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      if (typeof window === "undefined") return;
-
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(pageParam, page.toString());
-
-      // Use Next.js router instead of window.history
-      router.replace(`?${params.toString()}`, { scroll: false });
-      onPageChange?.(page);
-    },
-    [router, searchParams, pageParam, onPageChange]
-  );
-
-  return { currentPage, pageSize, handlePageChange };
-}
-
-// Improved consolidated hook with proper typing
 interface PaginatedQueryOptions<TData, TSelected = TData> {
   section: string;
+  currentPage: number;
+  pageSize: number;
   queryKey?: string[];
   baseKey?: string[];
   queryFn?: (
@@ -56,10 +16,7 @@ interface PaginatedQueryOptions<TData, TSelected = TData> {
   ) => Promise<PaginationResponse<TData>>;
   select?: (item: TData) => TSelected;
   filters?: Record<string, string>;
-  pageSize?: number;
   enabled?: boolean;
-  pageParam?: string;
-  onPageChange?: (page: number) => void;
 }
 
 interface PaginatedQueryResult<TSelected> {
@@ -72,33 +29,23 @@ interface PaginatedQueryResult<TSelected> {
     totalPages: number;
     totalItems: number;
   };
-  onPageChange: (page: number) => void;
 }
 
 export function usePaginatedQuery<TData, TSelected = TData>({
   section,
+  currentPage,
+  pageSize,
   queryKey: providedQueryKey,
   baseKey,
   queryFn,
   select,
   filters,
-  pageSize: optionsPageSize,
   enabled = true,
-  pageParam = "page",
-  onPageChange,
 }: PaginatedQueryOptions<TData, TSelected>): PaginatedQueryResult<TSelected> {
-  // Internal pagination logic
-  const { currentPage, pageSize, handlePageChange } = usePaginationServer({
-    pageParam,
-    pageSize: optionsPageSize,
-    onPageChange,
-  });
-
   // Memoize active filters for stability
   const activeFilters = useMemo(() => {
     if (!filters) return {};
 
-    // Sort entries for deterministic ordering
     return Object.entries(filters)
       .sort(([a], [b]) => a.localeCompare(b))
       .filter(([_, value]) => value && value !== "" && value !== "all")
@@ -126,7 +73,7 @@ export function usePaginatedQuery<TData, TSelected = TData>({
     queryKey,
     queryFn: () =>
       queryFn?.(urlParams, section) ??
-      req<PaginationResponse<TData>>(`/public/${section}?${urlParams}`),
+      req<PaginationResponse<TData>>(`${section}?${urlParams}`),
     select: (response: PaginationResponse<TData>) => {
       const items = response.items || [];
       const transformedData = select
@@ -156,6 +103,5 @@ export function usePaginatedQuery<TData, TSelected = TData>({
       totalPages: 0,
       totalItems: 0,
     },
-    onPageChange: handlePageChange,
   };
 }
