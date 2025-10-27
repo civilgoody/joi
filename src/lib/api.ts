@@ -9,6 +9,8 @@ import axios, {
 import { API_BASE_URL, REQUEST_TIMEOUT } from "@/lib/constants/config";
 import { API_CONFIG } from "@/lib/constants/config";
 import handleAxiosError from "./error";
+import { setCookie, deleteCookie, storage } from "./utils/";
+import { toast } from "sonner";
 
 const BASE_URL = API_BASE_URL;
 const { DEFAULT_HEADERS, MAX_RETRIES, RETRY_DELAY_BASE } = API_CONFIG;
@@ -42,6 +44,7 @@ class ApiClient {
   }
 
   private static setupInterceptors(instance: AxiosInstance): void {
+    // 🔹 Request interceptor
     instance.interceptors.request.use(
       async (config) => {
         logRequest(config);
@@ -49,12 +52,9 @@ class ApiClient {
         const customConfig = config as CustomAxiosRequestConfig;
         customConfig.metadata = { startTime: Date.now() };
 
-        // Auth logic - Get token from local storage
-        if (typeof window !== "undefined") {
-          const authToken = localStorage.getItem("authToken");
-          if (authToken && customConfig.headers) {
-            customConfig.headers.Authorization = `Bearer ${authToken}`;
-          }
+        const authToken = storage.get<string>("authToken");
+        if (authToken && customConfig.headers) {
+          customConfig.headers.Authorization = `Bearer ${authToken}`;
         }
 
         return customConfig;
@@ -62,6 +62,7 @@ class ApiClient {
       (error: AxiosError) => Promise.reject(error)
     );
 
+    // 🔹 Response interceptor
     instance.interceptors.response.use(
       (response) => {
         logResponse(response);
@@ -71,68 +72,68 @@ class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as CustomAxiosRequestConfig;
 
-        // Auth logic - Handle 401 (Unauthorized) - Token expired or invalid
+        // Handle 401 - expired or invalid token
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
-          // Option A: Try to refresh the token
-          const refreshToken =
-            typeof window !== "undefined"
-              ? localStorage.getItem("refreshToken")
-              : null;
-
-          if (refreshToken) {
-            try {
-              // Call your refresh endpoint
-              const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-                refreshToken,
-              });
-
-              const { token } = response.data.access;
-
-              // Store new token
-              if (typeof window !== "undefined") {
-                localStorage.setItem("authToken", token);
-              }
-
-              // Update the failed request with new token
+          try {
+            const newToken = await this.handleTokenRefresh();
+            if (newToken) {
+              // update header and retry
               if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
               }
-
-              // Retry the original request
               return instance(originalRequest);
-            } catch (refreshError) {
-              // Refresh failed - logout user
-              if (typeof window !== "undefined") {
-                localStorage.removeItem("authToken");
-                localStorage.removeItem("refreshToken");
-                // check if the user is on the signin page
-                if (window.location.pathname === "/signin") {
-                  return Promise.reject(refreshError);
-                }
-                window.location.href = "/signin";
-              }
-              return Promise.reject(refreshError);
             }
-          } else {
-            // No refresh token - logout user
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("authToken");
-              // check if the user is on the signin page
-              if (window.location.pathname === "/signin") {
-                return Promise.reject(error);
-              }
-              window.location.href = "/signin";
-            }
+          } catch (refreshError) {
+            return Promise.reject(refreshError);
           }
         }
-        // Auth logic - End
 
         handleApiError(error);
         return retryFailedRequest(error);
       }
     );
+  }
+
+  // 🔸 Extracted helper: handle token refresh and logout logic
+  private static async handleTokenRefresh(): Promise<string | null> {
+    const refreshToken = storage.get<string>("refreshToken");
+
+    if (!refreshToken) {
+      this.logoutUser();
+      return null;
+    }
+
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+        refreshToken,
+      });
+
+      const { token } = response.data.access;
+
+      storage.set("authToken", token);
+      setCookie("authToken", token, 7);
+
+      return token;
+    } catch {
+      this.logoutUser();
+      return null;
+    }
+  }
+
+  // 🔸 Extracted helper: logout and redirect to /signin
+  private static logoutUser(): void {
+    storage.remove("authToken");
+    storage.remove("refreshToken");
+    deleteCookie("authToken");
+
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/signin"
+    ) {
+      window.location.href = "/signin";
+    }
   }
 }
 
@@ -174,19 +175,31 @@ function handleApiError(error: AxiosError): void {
 }
 
 function retryFailedRequest(error: unknown): Promise<unknown> {
-  const { config } = error as { config: CustomAxiosRequestConfig };
-  if (!config || !config.retryCount) {
-    config.retryCount = 0;
+  const axiosError = error as AxiosError;
+  const config = axiosError.config as CustomAxiosRequestConfig;
+
+  // Guard
+  if (!config) return Promise.reject(error);
+
+  config.retryCount = config.retryCount ?? 0;
+
+  const status = axiosError.response?.status;
+
+  // 🚫 Don't retry these — all client errors (4xx) are final
+  if (status && status >= 400 && status < 500) {
+    return Promise.reject(error);
   }
 
-  if (error instanceof AxiosError) {
-    if (
-      [400, 401, 403, 413, 404, 408, 500].includes(error.response?.status || 0)
-    ) {
-      return Promise.reject(error);
-    }
+  // ✅ Only retry transient network errors or 5xx
+  const shouldRetry =
+    !status || // no response (network issue, timeout)
+    (status >= 500 && status < 600);
+
+  if (!shouldRetry) {
+    return Promise.reject(error);
   }
 
+  // 🔁 Retry with exponential backoff
   if (config.retryCount < MAX_RETRIES) {
     config.retryCount++;
     const delay = RETRY_DELAY_BASE * Math.pow(2, config.retryCount - 1);
@@ -220,7 +233,7 @@ export const req = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   method: HttpMethod = "get",
   data?: RequestData<TRequestData>,
-  errorMessage = "API Error"
+  errorMessage?: string
 ): Promise<TResponse> => {
   try {
     const response = await apiClient[method]<ApiResponse<TResponse>>(
@@ -231,6 +244,7 @@ export const req = async <TResponse, TRequestData = undefined>(
     return response.data.data;
   } catch (error) {
     const errorResponse = handleAxiosError(error, errorMessage);
+    toast.error(`Error: ${errorMessage || errorResponse.message}`);
     throw new Error(errorResponse.message);
   }
 };
@@ -238,7 +252,7 @@ export const req = async <TResponse, TRequestData = undefined>(
 req.post = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage = "API Error"
+  errorMessage?: string
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "post", data, errorMessage);
 };
@@ -246,14 +260,14 @@ req.post = async <TResponse, TRequestData = undefined>(
 req.put = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage = "API Error"
+  errorMessage?: string
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "put", data, errorMessage);
 };
 
 req.delete = async <TResponse>(
   endpoint: string,
-  errorMessage = "API Error"
+  errorMessage?: string
 ): Promise<TResponse> => {
   return req<TResponse>(endpoint, "delete", undefined, errorMessage);
 };
@@ -261,7 +275,7 @@ req.delete = async <TResponse>(
 req.patch = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage = "API Error"
+  errorMessage?: string
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "patch", data, errorMessage);
 };
