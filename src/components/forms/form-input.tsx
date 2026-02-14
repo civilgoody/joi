@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { LuEye, LuEyeOff } from "react-icons/lu";
-import { DatePicker } from "../ui/date-picker";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
+// import { DatePicker } from "../ui/date-picker";
+// import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 
 export type FormInputType =
   | "text"
@@ -30,8 +30,9 @@ type BaseInputProps = Omit<
   "name" | "defaultValue" | "value" | "onChange" | "onBlur" | "ref" | "type"
 >;
 
-interface FormInputProps<TFieldValues extends FieldValues>
-  extends BaseInputProps {
+interface FormInputProps<
+  TFieldValues extends FieldValues,
+> extends BaseInputProps {
   control?: Control<TFieldValues>;
   name: Path<TFieldValues>;
   label?: string;
@@ -72,28 +73,28 @@ export function FormInput<TFieldValues extends FieldValues>({
       name={name}
       render={({ field, fieldState: { error } }) => {
         const renderInput = (
-          field: ControllerRenderProps<TFieldValues, Path<TFieldValues>>
+          field: ControllerRenderProps<TFieldValues, Path<TFieldValues>>,
         ) => {
           const isPasswordInput = name === "password" || type === "password";
           const inputType = isPasswordInput && hidePassword ? "password" : type;
 
-          if (inputType === "date") {
-            return (
-              <DatePicker
-                name={name}
-                placeholder={placeholder}
-                value={field.value ? new Date(field.value) : undefined}
-                onChange={(date) => field.onChange(date)}
-                disabled={disabled}
-                className={cn(
-                  {
-                    "!border-red-500 !focus:ring-red-500": !!error,
-                  },
-                  rest.className
-                )}
-              />
-            );
-          }
+          // if (inputType === "date") {
+          //   return (
+          //     <DatePicker
+          //       name={name}
+          //       placeholder={placeholder}
+          //       value={field.value ? new Date(field.value) : undefined}
+          //       onChange={(date) => field.onChange(date)}
+          //       disabled={disabled}
+          //       className={cn(
+          //         {
+          //           "!border-red-500 !focus:ring-red-500": !!error,
+          //         },
+          //         rest.className
+          //       )}
+          //     />
+          //   );
+          // }
 
           if (inputType === "textarea") {
             return (
@@ -108,42 +109,42 @@ export function FormInput<TFieldValues extends FieldValues>({
                     "!border-red-500 !focus:ring-red-500": !!error,
                   },
                   "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 focus-visible:border-none",
-                  rest.className
+                  rest.className,
                 )}
               />
             );
           }
 
-          if ([inputType, name].includes("otp")) {
-            return (
-              <InputOTP
-                {...field}
-                maxLength={4}
-                placeholder={placeholder}
-                disabled={disabled}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                className={cn(
-                  {
-                    "!border-red-500 !focus:ring-red-500": !!error,
-                  },
-                  "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 focus-visible:border-none",
-                  rest.className
-                )}
-              >
-                <InputOTPGroup className="flex gap-4">
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <InputOTPSlot
-                      key={index}
-                      index={index}
-                      inputMode="numeric"
-                      className="size-20 rounded-lg shadow-none outline-none"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            );
-          }
+          // if ([inputType, name].includes("otp")) {
+          //   return (
+          //     <InputOTP
+          //       {...field}
+          //       maxLength={4}
+          //       placeholder={placeholder}
+          //       disabled={disabled}
+          //       inputMode="numeric"
+          //       pattern="[0-9]*"
+          //       className={cn(
+          //         {
+          //           "!border-red-500 !focus:ring-red-500": !!error,
+          //         },
+          //         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 focus-visible:border-none",
+          //         rest.className
+          //       )}
+          //     >
+          //       <InputOTPGroup className="flex gap-4">
+          //         {Array.from({ length: 4 }, (_, index) => (
+          //           <InputOTPSlot
+          //             key={index}
+          //             index={index}
+          //             inputMode="numeric"
+          //             className="size-20 rounded-lg shadow-none outline-none"
+          //           />
+          //         ))}
+          //       </InputOTPGroup>
+          //     </InputOTP>
+          //   );
+          // }
 
           return (
             <div className="relative">
@@ -164,7 +165,7 @@ export function FormInput<TFieldValues extends FieldValues>({
                   variant === "default" &&
                     "border-ring ring-ring/50 ring-1 border-none bg-white font-poppins font-medium placeholder:text-[#C1C1C1] text-xs md:text-xs rounded pl-6",
                   "h-12 block", // Added pr-10 for icon space
-                  rest.className
+                  rest.className,
                 )}
               />
               {isPasswordInput && (
@@ -194,7 +195,7 @@ export function FormInput<TFieldValues extends FieldValues>({
 }
 export function handleInputChange(
   e: React.ChangeEvent<HTMLInputElement>,
-  type: FormInputType
+  type: FormInputType,
 ) {
   const { value, valueAsNumber } = e.target;
   if (type === "number") {
