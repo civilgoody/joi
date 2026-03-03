@@ -76,7 +76,12 @@ export function FormInput<TFieldValues extends FieldValues>({
           field: ControllerRenderProps<TFieldValues, Path<TFieldValues>>,
         ) => {
           const isPasswordInput = name === "password" || type === "password";
-          const inputType = isPasswordInput && hidePassword ? "password" : type;
+          const inputType =
+            isPasswordInput && hidePassword
+              ? "password"
+              : type === "password"
+                ? "text"
+                : type;
 
           // if (inputType === "date") {
           //   return (
