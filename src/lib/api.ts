@@ -5,14 +5,16 @@ import axios, {
   AxiosResponse,
   AxiosError,
   InternalAxiosRequestConfig,
+  type AxiosProgressEvent,
 } from "axios";
-import { API_BASE_URL, REQUEST_TIMEOUT } from "@/lib/constants/config";
-import { API_CONFIG } from "@/lib/constants/config";
+import { REQUEST_TIMEOUT } from "./constants/config";
+import { API_CONFIG } from "./constants/config";
 import handleAxiosError from "./error";
-import { setCookie, deleteCookie, storage } from "./utils/";
+import { storage } from "./utils/";
 import { toast } from "sonner";
 
-const BASE_URL = API_BASE_URL;
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = "/api";
 const { DEFAULT_HEADERS, MAX_RETRIES, RETRY_DELAY_BASE } = API_CONFIG;
 
 // Axios Interceptors
@@ -25,6 +27,14 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+// Define paths that should not trigger automatic logout/refresh on 401
+// const EXCLUDED_AUTH_PATHS = [
+//   "/auth/password",
+//   "/auth/profile",
+//   "/auth/email/verify",
+//   // "",
+// ];
+
 class ApiClient {
   private static instance: AxiosInstance;
 
@@ -34,6 +44,7 @@ class ApiClient {
         baseURL: BASE_URL,
         headers: DEFAULT_HEADERS,
         timeout: REQUEST_TIMEOUT,
+        // withCredentials: true,
       });
 
       this.setupInterceptors(axiosInstance);
@@ -52,14 +63,21 @@ class ApiClient {
         const customConfig = config as CustomAxiosRequestConfig;
         customConfig.metadata = { startTime: Date.now() };
 
-        const authToken = storage.get<string>("authToken");
-        if (authToken && customConfig.headers) {
-          customConfig.headers.Authorization = `Bearer ${authToken}`;
-        }
+        // Add platform header from environment
+        // if (platform.current && customConfig.headers) {
+        //   customConfig.headers["x-app-platform"] = platform.current;
+        // }
+
+        // const authToken = storage.get<string>(AUTH_COOKIES.TOKEN);
+        // const authToken = getCookie(AUTH_COOKIES.TOKEN);
+        // console.log("authToken", authToken);
+        // if (authToken && customConfig.headers) {
+        //   customConfig.headers.Authorization = `Bearer ${authToken}`;
+        // }
 
         return customConfig;
       },
-      (error: AxiosError) => Promise.reject(error)
+      (error: AxiosError) => Promise.reject(error),
     );
 
     // 🔹 Response interceptor
@@ -71,9 +89,16 @@ class ApiClient {
       },
       async (error: AxiosError) => {
         const originalRequest = error.config as CustomAxiosRequestConfig;
+        // const isExcluded = EXCLUDED_AUTH_PATHS.some((path) =>
+        //   originalRequest.url?.includes(path),
+        // );
 
         // Handle 401 - expired or invalid token
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (
+          (error.response?.status === 401 || error.response?.status === 403) &&
+          !originalRequest._retry
+          // !isExcluded
+        ) {
           originalRequest._retry = true;
 
           try {
@@ -92,7 +117,7 @@ class ApiClient {
 
         handleApiError(error);
         return retryFailedRequest(error);
-      }
+      },
     );
   }
 
@@ -101,7 +126,7 @@ class ApiClient {
     const refreshToken = storage.get<string>("refreshToken");
 
     if (!refreshToken) {
-      this.logoutUser();
+      // await this.logoutUser();
       return null;
     }
 
@@ -112,27 +137,36 @@ class ApiClient {
 
       const { token } = response.data.access;
 
-      storage.set("authToken", token);
-      setCookie("authToken", token, 7);
+      // storage.set(AUTH_COOKIES.TOKEN, token);
+      // setCookie(AUTH_COOKIES.TOKEN, token, 7);
 
       return token;
     } catch {
-      this.logoutUser();
+      // await this.logoutUser();
       return null;
     }
   }
 
   // 🔸 Extracted helper: logout and redirect to /signin
-  private static logoutUser(): void {
-    storage.remove("authToken");
-    storage.remove("refreshToken");
-    deleteCookie("authToken");
-
+  private static async logoutUser(): Promise<void> {
+    const res = await fetch("/api/auth/signout", {
+      method: "POST",
+    });
     if (
+      res.ok &&
       typeof window !== "undefined" &&
       window.location.pathname !== "/signin"
     ) {
-      window.location.href = "/signin";
+      const { pathname, search } = window.location;
+      const authRedirect = pathname + search;
+      if (authRedirect !== "/") {
+        storage.set("authRedirect", authRedirect);
+      }
+      // if (!PUBLIC_ROUTES.includes(pathname)) {
+      //   setTimeout(() => {
+      //     window.location.assign("/");
+      //   }, 2000);
+      // }
     }
   }
 }
@@ -204,7 +238,7 @@ function retryFailedRequest(error: unknown): Promise<unknown> {
     config.retryCount++;
     const delay = RETRY_DELAY_BASE * Math.pow(2, config.retryCount - 1);
     return new Promise((resolve) => setTimeout(resolve, delay)).then(() =>
-      ApiClient.getInstance()(config)
+      ApiClient.getInstance()(config),
     );
   }
 
@@ -233,26 +267,42 @@ export const req = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   method: HttpMethod = "get",
   data?: RequestData<TRequestData>,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<TResponse> => {
   try {
-    const response = await apiClient[method]<ApiResponse<TResponse>>(
-      `${endpoint}`,
-      data
-    );
+    const response = await (method === "delete"
+      ? apiClient.delete<ApiResponse<TResponse>>(endpoint, { data })
+      : apiClient[method]<ApiResponse<TResponse>>(endpoint, data));
 
     return response.data.data;
   } catch (error) {
     const errorResponse = handleAxiosError(error, errorMessage);
-    toast.error(`Error: ${errorMessage || errorResponse.message}`);
-    throw new Error(errorResponse.message);
+    const isUnauthorized = errorResponse.code === "UNAUTHORIZED";
+    const isProfile = endpoint.includes("/auth/profile");
+    const isNotifs = endpoint.includes("/notifications");
+    // const isAuth = endpoint.includes("/auth") && !isProfile;
+
+    // Silent return for profile checks when unauthorized
+    if ((isProfile || isNotifs) && isUnauthorized) {
+      return null as any;
+    } else if (!isNotifs) {
+      toast.error(errorResponse.message, { id: "api-error" });
+    }
+    // if (!isProfile) {
+    //   if (!(isUnauthorized && isAuth) && !endpoint.includes("/notifications")) {
+    //   }
+    // }
+
+    const err = new Error(errorResponse.message);
+    (err as any).code = errorResponse.code;
+    throw err;
   }
 };
 
 req.post = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "post", data, errorMessage);
 };
@@ -260,22 +310,50 @@ req.post = async <TResponse, TRequestData = undefined>(
 req.put = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "put", data, errorMessage);
 };
 
-req.delete = async <TResponse>(
+req.delete = async <TResponse, TRequestData = undefined>(
   endpoint: string,
-  errorMessage?: string
+  data?: RequestData<TRequestData>,
+  errorMessage?: string,
 ): Promise<TResponse> => {
-  return req<TResponse>(endpoint, "delete", undefined, errorMessage);
+  return req<TResponse, TRequestData>(endpoint, "delete", data, errorMessage);
 };
 
 req.patch = async <TResponse, TRequestData = undefined>(
   endpoint: string,
   data?: RequestData<TRequestData>,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<TResponse> => {
   return req<TResponse, TRequestData>(endpoint, "patch", data, errorMessage);
+};
+
+req.upload = async <TResponse>(
+  endpoint: string,
+  formData: FormData,
+  errorMessage?: string,
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+): Promise<TResponse> => {
+  try {
+    const response = await apiClient.post<ApiResponse<TResponse>>(
+      endpoint,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress,
+      },
+    );
+
+    return response.data.data;
+  } catch (error) {
+    const errorResponse = handleAxiosError(error, errorMessage);
+    toast.error(errorResponse.message, { id: "upload-error" });
+    // toast.error(`Error: ${errorMessage || errorResponse.message}`);
+    throw new Error(errorResponse.message);
+  }
 };

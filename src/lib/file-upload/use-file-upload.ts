@@ -1,152 +1,194 @@
-// hooks/useFileUpload.ts
-import { useState, useCallback, useEffect } from "react";
 import { useDropzone, FileRejection, Accept } from "react-dropzone";
 import { toast } from "sonner";
+import { req } from "../../lib/api";
+import type { AxiosProgressEvent } from "axios";
 
-// Define the structure for a file being managed by the hook
-export interface UploadedFile {
+const MODULE_NAME = "exportpadi_crop";
+export type UploadedFile = {
   id: string;
   file: File;
   previewUrl: string;
-  progress: number; // 0-100
+  progress: number;
   status: "pending" | "uploading" | "completed" | "error";
   error?: string;
-}
+  uploadedUrl?: string;
+};
 
-// Define the options for the hook
 interface FileUploadOptions {
   maxFiles?: number;
-  maxSize?: number; // Size in MB
+  maxSize?: number; // in mb
   fileTypes?: Accept;
-  onChange?: (files: UploadedFile[]) => void;
+  onFilesChange?: (
+    files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[]),
+  ) => void;
+  files: UploadedFile[];
+  onUpload: (
+    file: File,
+    onProgress: (progress: number) => void,
+  ) => Promise<{ url: string }>;
 }
 
 export function useFileUpload({
   maxFiles = 1,
-  maxSize = 5, // Default max size is 5MB
+  maxSize = 5,
   fileTypes = {
     "image/*": [".jpeg", ".jpg", ".png"],
     "application/pdf": [".pdf"],
   },
-  onChange,
+  onFilesChange,
+  files,
+  onUpload,
 }: FileUploadOptions) {
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-
-  // Memoize the onChange callback to prevent unnecessary re-renders
-  const onFilesChange = useCallback(
-    (updatedFiles: UploadedFile[]) => {
-      onChange?.(updatedFiles);
-    },
-    [onChange]
-  );
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      // Handle accepted files
-      const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
-        // random id
-        id: Math.random().toString(36).substring(2, 15),
-        file,
-        previewUrl: URL.createObjectURL(file),
-        progress: 0,
-        status: "pending",
-      }));
-
-      // Handle rejected files
-      const rejectedFiles: UploadedFile[] = fileRejections.map(
-        ({ file, errors }) => ({
-          id: Math.random().toString(36).substring(2, 15),
-          file,
-          previewUrl: URL.createObjectURL(file), // Still create a URL for previewing the rejected file
-          progress: 0,
-          status: "error",
-          error: errors.map((e) => e.message).join(", "),
-        })
-      );
-
-      setFiles((prevFiles) => {
-        const combined = [...prevFiles, ...newFiles, ...rejectedFiles];
-        // Enforce the maxFiles limit
-        const finalFiles = combined.slice(0, maxFiles);
-        onFilesChange(finalFiles);
-        return finalFiles;
-      });
-    },
-    [maxFiles, onFilesChange]
-  );
-
-  const removeFile = useCallback(
-    (id: string) => {
-      setFiles((prevFiles) => {
-        const fileToRemove = prevFiles.find((file) => file.id === id);
-        if (fileToRemove) {
-          // Clean up the object URL to prevent memory leaks
-          URL.revokeObjectURL(fileToRemove.previewUrl);
-        }
-        const updatedFiles = prevFiles.filter((file) => file.id !== id);
-        onFilesChange(updatedFiles);
-        return updatedFiles;
-      });
-    },
-    [onFilesChange]
-  );
-
-  // This is where you'd handle the actual upload to a server/storage bucket.
-  // This example function simulates an upload with progress updates.
-  const uploadFile = useCallback(
-    async (fileToUpload: UploadedFile) => {
-      setFiles((prevFiles) =>
-        prevFiles.map((f) =>
+  const uploadFile = async (fileToUpload: UploadedFile) => {
+    try {
+      onFilesChange?.((prev) =>
+        prev.map((f) =>
           f.id === fileToUpload.id
-            ? { ...f, status: "uploading", progress: 0 }
-            : f
-        )
+            ? { ...f, status: "uploading", progress: 3 }
+            : f,
+        ),
       );
 
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setFiles((prevFiles) =>
-          prevFiles.map((f) => {
-            if (f.id === fileToUpload.id) {
-              const newProgress = Math.min(f.progress + 10, 100);
-              if (newProgress === 100) {
-                clearInterval(progressInterval);
-                onFilesChange(
-                  prevFiles.map((pf) =>
-                    pf.id === f.id
-                      ? { ...f, status: "completed", progress: 100 }
-                      : pf
-                  )
-                );
-                return { ...f, status: "completed", progress: 100 };
-              }
-              return { ...f, progress: newProgress };
+      const formData = new FormData();
+      const uploadUrl = "/files/upload";
+      let response: { url: string };
+
+      if (onUpload) {
+        response = await onUpload(fileToUpload.file, (progress) => {
+          onFilesChange?.((prev) =>
+            prev.map((f) =>
+              f.id === fileToUpload.id ? { ...f, progress } : f,
+            ),
+          );
+        });
+      } else {
+        // Generic file upload (existing behavior)
+        formData.append("file", fileToUpload.file);
+        formData.append("module", MODULE_NAME);
+
+        response = await req.upload<{ url: string }>(
+          uploadUrl,
+          formData,
+          "",
+          (progressEvent: AxiosProgressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              );
+
+              onFilesChange?.((prev) =>
+                prev.map((f) =>
+                  f.id === fileToUpload.id
+                    ? {
+                        ...f,
+                        progress: percentCompleted,
+                      }
+                    : f,
+                ),
+              );
             }
-            return f;
-          })
+          },
         );
-      }, 200);
+      }
 
-      // Replace this with your actual upload API call
-      // For example: `await uploadToS3(fileToUpload.file)`
-      // On success, update status to 'completed'. On failure, set status to 'error'.
-    },
-    [onFilesChange]
-  );
+      onFilesChange?.((prev) =>
+        prev.map((f) =>
+          f.id === fileToUpload.id
+            ? {
+                ...f,
+                status: "completed",
+                progress: 100,
+                uploadedUrl: response.url,
+              }
+            : f,
+        ),
+      );
 
-  // Cleanup object URLs on unmount
-  useEffect(() => {
-    return () => {
-      files.forEach((file) => URL.revokeObjectURL(file.previewUrl));
-    };
-  }, [files]);
+      toast.success(`Uploaded ${fileToUpload.file.name}`, {
+        id: "upload-success",
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Upload failed";
+      onFilesChange?.((prev) =>
+        prev.map((f) =>
+          f.id === fileToUpload.id ? { ...f, status: "error", error: msg } : f,
+        ),
+      );
+    }
+  };
+
+  const onDrop = (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    const totalNewFiles = acceptedFiles.length + fileRejections.length;
+    const availableSlots = maxFiles - files.length;
+
+    if (totalNewFiles > availableSlots && availableSlots > 0) {
+      toast.error(
+        `You can only upload ${availableSlots} more file${availableSlots === 1 ? "" : "s"}`,
+      );
+    } else if (availableSlots === 0) {
+      toast.error(
+        `Maximum ${maxFiles} file${maxFiles === 1 ? "" : "s"} allowed`,
+      );
+      return;
+    }
+
+    // Group rejections by error type
+    if (fileRejections.length > 0) {
+      const errorTypes = new Set<string>();
+
+      fileRejections.forEach(({ errors }) => {
+        errors.forEach((error) => {
+          errorTypes.add(error.code);
+        });
+      });
+
+      // Toast once per error type
+      if (errorTypes.has("file-too-large")) {
+        toast.error(`Some files are too large. Maximum size is ${maxSize}MB`);
+      }
+      if (errorTypes.has("file-invalid-type")) {
+        toast.error("Some files have invalid type");
+      }
+    }
+
+    const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
+      id: Math.random().toString(36).substring(2, 15),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      progress: 0,
+      status: "pending",
+    }));
+
+    if (maxFiles === 1) {
+      files.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+      onFilesChange?.(newFiles.slice(0, 1));
+      if (newFiles[0]) uploadFile(newFiles[0]);
+    } else {
+      const combined = [...files, ...newFiles];
+      const validNewFiles = newFiles.slice(0, availableSlots);
+      const finalFiles = combined.slice(0, maxFiles);
+
+      const droppedFiles = combined.slice(maxFiles);
+      droppedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+
+      onFilesChange?.(finalFiles);
+      validNewFiles.forEach((f) => uploadFile(f));
+    }
+  };
+
+  const removeFile = (id: string, currentFiles: UploadedFile[]) => {
+    const fileToRemove = currentFiles.find((f) => f.id === id);
+    if (fileToRemove) URL.revokeObjectURL(fileToRemove.previewUrl);
+    const updated = currentFiles.filter((f) => f.id !== id);
+    onFilesChange?.(updated);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     maxFiles,
-    maxSize: maxSize * 1024 * 1024, // Convert MB to bytes
+    maxSize: maxSize * 1024 * 1024,
     accept: fileTypes,
-    onError: (err) => toast.error(err.message),
+    disabled: files.some((f) => f.status === "uploading"),
   });
 
   return {
@@ -155,6 +197,5 @@ export function useFileUpload({
     getInputProps,
     isDragActive,
     removeFile,
-    uploadFile,
   };
 }

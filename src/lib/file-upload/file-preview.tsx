@@ -1,6 +1,6 @@
-// components/FilePreview.tsx
 import { UploadedFile } from "./use-file-upload";
 import { File as FileIcon, X } from "lucide-react";
+import Link from "next/link";
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return "0 Bytes";
@@ -36,7 +36,7 @@ export function FilePreview({ file, onRemove }: FilePreviewProps) {
           </div>
         )}
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
+          <span className="text-sm font-medium text-foreground/80 truncate max-w-[150px]">
             {file.file.name}
           </span>
           <span className="text-xs text-gray-500">
@@ -68,7 +68,69 @@ export function FilePreview({ file, onRemove }: FilePreviewProps) {
           style={{ width: `${file.status === "error" ? 100 : file.progress}%` }}
         />
       </div>
-      {file.error && <p className="text-xs text-red-500 mt-1">{file.error}</p>}
+      {/* {file.error && <p className="text-xs text-red-500 mt-1">{file.error}</p>} */}
+    </div>
+  );
+}
+
+interface ExistingFilePreviewProps {
+  url: string;
+  onRemove: (url: string) => void;
+  name?: string;
+}
+
+export function ExistingFilePreview({
+  url,
+  onRemove,
+  name,
+}: ExistingFilePreviewProps) {
+  const fileName = name || url.split("/").pop()?.split("?")[0] || "Document";
+  const isImage = /\.(jpg|jpeg|png|webp)$/i.test(url);
+  return (
+    <div
+      className="relative flex items-center justify-between p-3 border rounded-md min-w-48 max-w-56 w-full bg-white"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center gap-3">
+        {isImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt={fileName}
+            className="size-12 object-cover rounded-md"
+          />
+        ) : (
+          <div className="size-12 flex items-center justify-center bg-gray-100 rounded-md">
+            <FileIcon className="size-6 text-gray-500" />
+          </div>
+        )}
+        <div className="flex flex-col truncate">
+          <Link
+            href={url}
+            className="text-sm font-medium text-secondary hover:underline truncate max-w-[142px]"
+            target="_blank"
+          >
+            {fileName}
+          </Link>
+          <span className="text-xs text-primary font-semibold uppercase">
+            PREVIOUS UPLOAD
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(url);
+        }}
+        className="p-1 rounded-full hover:bg-gray-100"
+        aria-label={`Remove ${fileName}`}
+      >
+        <X className="size-4 text-gray-600" />
+      </button>
+
+      {/* Verified indicator Bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-b-md" />
     </div>
   );
 }
