@@ -63,7 +63,7 @@ const errorMessages: Record<ErrorCode, string> = {
  */
 const handleAxiosError = (
   error: unknown,
-  defaultMessage = "An error occurred"
+  defaultMessage = "An error occurred",
 ): HandledError => {
   let handledError: HandledError = {
     code: ErrorCode.UNKNOWN_ERROR,
@@ -141,7 +141,6 @@ const handleAxiosError = (
   if (process.env.NODE_ENV === "development") {
     console.log("API Error:", handledError);
   }
-  toast.error(handledError.message);
 
   return handledError;
 };
